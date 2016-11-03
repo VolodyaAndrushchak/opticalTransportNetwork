@@ -20,9 +20,6 @@ sizeBuffer = [];
 sizePacket = [];
 %%% Herst functions %%%
 fBM1 = abs(wfbm(0.72, 20000));
-fBM2 = abs(wfbm(0.72, 20000));
-fBM3 = abs(wfbm(0.72, 20000));
-fBM4 = abs(wfbm(0.72, 20000));
 %%% Herst parameter %%%
 H = wfbmesti(fBM1);
 %%% influence on payload of this node %%%
@@ -68,10 +65,7 @@ optical_resources_arr = zeros(5, number_wavelengths_fiber, simulation_time, max_
 for i = 1:simulation_time;
     
     %%%--- start loop - 'generation, aggregation, processing and switching payload' ---%%%
-    for this_node = 1 : number_node_in_network
-       
-        destination_Node = round(rand() * (number_node_in_network - 1) + 1); % генерація дестенейшн
-          
+    for this_node = 1 : number_node_in_network          
         %%% start - generation payload for every input ports %%%
         for z = 1 : number_ports_in_node;
             fBM_local = abs(wfbm(0.72, 20000));
@@ -84,6 +78,7 @@ for i = 1:simulation_time;
                         end
                      k = n - 1;
                     %%% end - generation type of service %%%
+                destination_Node = round(rand() * (number_node_in_network - 1) + 1); % генерація дестенейшн
                 P = [1, destination_Node, L(k)];            
                 Packet = [Packet; P];
              end
@@ -103,23 +98,49 @@ for i = 1:simulation_time;
              MM=m;      %якщо довжина буфера менше M
            end
         
+         %array_transport_units = [number_node_in_network, 1222, 3];
+         array_transport_units = zeros(5, 1222, 3);
+         array_pointers_for_tr_units = [1,1,1,1,1];  
          %%% start - formation transport units from input payload %%%
          for r = 1:MM
              %%% the transport unit OLS technology or other trasport
              %%% technology has length - in this sim.model average length of ip packet * 100
              %%% if transport unit has less payload than 78200 bytes we
              %%% continue to download the transport unit
-             if sum(transport_unit(:, 3)) < 78200 
-                 transport_unit = [transport_unit; Bufer(r, :)];
+             %if sum(transport_unit(:, 3)) < 78200 
+                % transport_unit = [transport_unit; Bufer(r, :)];
              %%% else 
-             else
+            % else
                  %%% we 1)determinate the number of packets in this block 
-                 [l,~]=size(transport_unit);
+                 %[l,~]=size(transport_unit);
                  %%% write this block in counter transport unit that determinate the number block in this iteration of simulation time
                  %%% destination node and number packets in block
-                 counter_transport_unit  = [counter_transport_unit; Bufer(r, 2), l]; 
-                 transport_unit = [0,0,0];
-             end 
+                 %counter_transport_unit  = [counter_transport_unit; Bufer(r, 2), l]; 
+                % transport_unit = [0,0,0];
+             %end 
+             if sum(array_transport_units(Bufer(r,2), :, 3)) < 78200
+                 array_transport_units(Bufer(r,2), array_pointers_for_tr_units(Bufer(r,2)),  1) = Bufer(r,1);
+                 array_transport_units(Bufer(r,2), array_pointers_for_tr_units(Bufer(r,2)),  2) = Bufer(r,2);
+                 array_transport_units(Bufer(r,2), array_pointers_for_tr_units(Bufer(r,2)),  3) = Bufer(r,3);
+                 
+                 array_pointers_for_tr_units(Bufer(r,2)) = array_pointers_for_tr_units(Bufer(r,2)) + 1;
+             else
+                 %[l,b, ~]=size(array_transport_units(Bufer(r,2)));
+                 %%% write this block in counter transport unit that determinate the number block in this iteration of simulation time
+                 %%% destination node and number packets in block
+                 counter_transport_unit  = [counter_transport_unit; Bufer(r, 2),  array_pointers_for_tr_units(Bufer(r,2)) + 1]; 
+                 
+                 array_transport_units(Bufer(r,2), 1:1222,  1) = 0;
+                 array_transport_units(Bufer(r,2), 1:1222,  2) = 0;
+                 array_transport_units(Bufer(r,2), 1:1222,  3) = 0;
+                 array_pointers_for_tr_units(Bufer(r,2)) = 1;
+                 
+                 array_transport_units(Bufer(r,2), array_pointers_for_tr_units(Bufer(r,2)),  1) = Bufer(r,1);
+                 array_transport_units(Bufer(r,2), array_pointers_for_tr_units(Bufer(r,2)),  2) = Bufer(r,2);
+                 array_transport_units(Bufer(r,2), array_pointers_for_tr_units(Bufer(r,2)),  3) = Bufer(r,3);
+                 
+                 array_pointers_for_tr_units(Bufer(r,2)) = array_pointers_for_tr_units(Bufer(r,2)) + 1;
+             end
          end
          %%% end - formation transport units from input payload %%%
 
@@ -306,4 +327,4 @@ for fiber1 = 1:5
     end   
 end
 
-plot(arr);
+%plot(arr);
